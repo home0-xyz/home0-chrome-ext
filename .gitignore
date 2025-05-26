@@ -1,0 +1,5 @@
+
+# BMAD Method
+.bmad/state/
+.bmad/backup/
+.bmad/*.log
