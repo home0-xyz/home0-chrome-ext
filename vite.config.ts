@@ -46,11 +46,13 @@ export default defineConfig({
         content: resolve(__dirname, 'src/content/index.ts'),
         sidebar: resolve(__dirname, 'src/sidebar/index.html'),
         popup: resolve(__dirname, 'src/popup/index.html'),
+        auth: resolve(__dirname, 'src/auth/index.html'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === 'sidebar') return 'sidebar/index.js';
           if (chunkInfo.name === 'popup') return 'popup/index.js';
+          if (chunkInfo.name === 'auth') return 'auth/index.js';
           return '[name]/index.js';
         },
         chunkFileNames: '[name]/[name].[hash].js',

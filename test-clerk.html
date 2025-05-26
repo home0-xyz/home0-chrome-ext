@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Clerk in Extension</title>
+  <script>
+    // This page tests Clerk directly in the extension context
+    console.log('Extension Context Test:', {
+      origin: window.location.origin,
+      href: window.location.href,
+      extensionId: chrome.runtime.id,
+      expectedId: 'ofildlgdeggjekidmehocamopeglfmle',
+      matches: chrome.runtime.id === 'ofildlgdeggjekidmehocamopeglfmle'
+    });
+  </script>
+</head>
+<body>
+  <h1>Clerk Extension Test</h1>
+  <p>Check console for extension context details</p>
+  <p>Extension ID: <span id="ext-id"></span></p>
+  <p>Expected ID: ofildlgdeggjekidmehocamopeglfmle</p>
+  <p>Status: <span id="status"></span></p>
+  
+  <script>
+    document.getElementById('ext-id').textContent = chrome.runtime.id;
+    document.getElementById('status').textContent = 
+      chrome.runtime.id === 'ofildlgdeggjekidmehocamopeglfmle' ? '✅ Correct' : '❌ Mismatch';
+  </script>
+</body>
+</html>

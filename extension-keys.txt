@@ -1,0 +1,21 @@
+# Chrome Extension Keys
+
+## Private Key
+- File: key.pem
+- **KEEP THIS SECURE - NEVER COMMIT TO GIT**
+
+## Public Key (for manifest.json key field)
+```
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo5cC3sA4LxvijagMTekx23FalmqwHHVwRM5V37P2ZvfBr0jE3vimRiI8e/LG19F0ZH9JEdxnk4GVrXr6HrJ/Qu4nPPgCADj3s+oDHqzUbYOOMhzrzzWFZ2R8CDgysqPS+2MtKxEuiwbE2kt9PH8bN5R2RFE7SO8JZgVEfvL5NB5Z0RpzdcqtV4Ni/cZhad9CTArLH3RhmXYp0KPlQcvm8+0X/HbtUcMqPCHx+e/NZQcXXGDWugrXAqCo5GG8RWKWujzumuaPugLLMtw237GGUlt7wQtQmd74p1FyNWUko4FC3JQkinsZ0/G38Wvh3OiKuVeUexognojeGtbb/B9ESQIDAQAB
+```
+
+## Extension ID
+`ofildlgdeggjekidmehocamopeglfmle`
+
+## Usage
+Add to manifest.json:
+```json
+{
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo5cC3sA4LxvijagMTekx23FalmqwHHVwRM5V37P2ZvfBr0jE3vimRiI8e/LG19F0ZH9JEdxnk4GVrXr6HrJ/Qu4nPPgCADj3s+oDHqzUbYOOMhzrzzWFZ2R8CDgysqPS+2MtKxEuiwbE2kt9PH8bN5R2RFE7SO8JZgVEfvL5NB5Z0RpzdcqtV4Ni/cZhad9CTArLH3RhmXYp0KPlQcvm8+0X/HbtUcMqPCHx+e/NZQcXXGDWugrXAqCo5GG8RWKWujzumuaPugLLMtw237GGUlt7wQtQmd74p1FyNWUko4FC3JQkinsZ0/G38Wvh3OiKuVeUexognojeGtbb/B9ESQIDAQAB"
+}
+```

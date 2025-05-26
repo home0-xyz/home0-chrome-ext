@@ -62,6 +62,26 @@ chrome.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
       });
       break;
       
+    case 'CLERK_AUTH_SUCCESS':
+      // Handle Clerk authentication success
+      console.log('Clerk auth success:', request.user);
+      // Notify all tabs about auth state change
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, {
+              type: 'AUTH_STATE_CHANGED',
+              isAuthenticated: true,
+              user: request.user
+            }).catch(() => {
+              // Ignore errors for tabs that don't have our content script
+            });
+          }
+        });
+      });
+      sendResponse({ success: true });
+      break;
+      
     default:
       sendResponse({ error: 'Unknown message type' });
   }

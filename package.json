@@ -39,6 +39,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@clerk/chrome-extension": "^2.4.8",
     "@clerk/clerk-react": "^5.31.6",
     "@clerk/types": "^4.59.1",
     "@radix-ui/react-scroll-area": "^1.2.9",

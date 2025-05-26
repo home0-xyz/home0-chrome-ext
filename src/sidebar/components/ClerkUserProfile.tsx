@@ -1,11 +1,21 @@
 import React from 'react';
-import { UserButton, useUser } from '@clerk/clerk-react';
 import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { LogOut, User } from 'lucide-react';
+import { useClerkAuth } from '../hooks/useClerkAuth';
 
 export function ClerkUserProfile() {
-  const { user } = useUser();
+  const { user, logout } = useClerkAuth();
 
   if (!user) return null;
+
+  const handleSignOut = async () => {
+    await logout();
+    
+    // Open auth page with sign-out action
+    const authUrl = chrome.runtime.getURL('auth/index.html?action=signout');
+    chrome.tabs.create({ url: authUrl });
+  };
 
   return (
     <Card>
@@ -17,22 +27,32 @@ export function ClerkUserProfile() {
           </p>
         </div>
         
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 space-y-4">
           <div className="flex items-center gap-3">
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: 'h-10 w-10'
-                }
-              }}
-            />
-            <div>
-              <p className="text-sm font-medium">{user.fullName || 'User'}</p>
-              <p className="text-xs text-muted-foreground">
-                {user.primaryEmailAddress?.emailAddress}
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {user.firstName && user.lastName 
+                  ? `${user.firstName} ${user.lastName}`
+                  : user.name || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
               </p>
             </div>
           </div>
+          
+          <Button 
+            onClick={handleSignOut}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -1,47 +1,79 @@
-import { useUser, useAuth as useClerkHook, useClerk } from '@clerk/clerk-react';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { clerkAuthService } from '@/shared/services/clerk-auth.service';
 
 export function useClerkAuth() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useClerkHook();
-  const { signOut } = useClerk();
+  // Since we're not using ClerkProvider in sidebar, we only check storage
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [storageAuth, setStorageAuth] = useState<{ isAuthenticated: boolean; user: any } | null>(null);
+  const [isCheckingStorage, setIsCheckingStorage] = useState(true);
 
-  // Sync Clerk auth state with extension storage
+  // Check Chrome storage for auth state on mount
   useEffect(() => {
-    const syncAuthState = async () => {
-      if (!isLoaded) return;
+    chrome.storage.local.get(['clerkAuth'], (result) => {
+      if (result.clerkAuth) {
+        setStorageAuth(result.clerkAuth);
+      }
+      setIsCheckingStorage(false);
+    });
 
-      if (isSignedIn && user) {
-        try {
-          // Get fresh token
-          const token = await getToken();
-          await clerkAuthService.signIn(user, token || '');
-        } catch (error) {
-          console.error('Failed to sync auth state:', error);
-        }
-      } else {
-        await clerkAuthService.signOut();
+    // Listen for storage changes
+    const handleStorageChange = (changes: any) => {
+      if (changes.clerkAuth) {
+        setStorageAuth(changes.clerkAuth.newValue);
       }
     };
 
-    syncAuthState();
-  }, [isLoaded, isSignedIn, user, getToken]);
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
+  }, []);
+
+  // Mark as loaded once we check storage
+  useEffect(() => {
+    if (!isCheckingStorage) {
+      setIsLoaded(true);
+    }
+  }, [isCheckingStorage]);
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      // Just clear storage since we're not using Clerk in sidebar
       await clerkAuthService.signOut();
+      await chrome.storage.local.remove(['clerkAuth']);
+      setStorageAuth(null);
     } catch (error) {
       console.error('Sign out error:', error);
     }
   };
 
+  const login = useCallback(async () => {
+    // Clerk handles login through the auth page
+    return { success: true };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await handleSignOut();
+    return { success: true };
+  }, []);
+
+  // Use storage auth if available (since Clerk might not work in iframe)
+  const isAuthenticated = storageAuth?.isAuthenticated || isSignedIn || false;
+  const currentUser = storageAuth?.user || (user ? {
+    id: user.id,
+    email: user.primaryEmailAddress?.emailAddress || '',
+    name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
+    firstName: user.firstName,
+    lastName: user.lastName
+  } : null);
+
   return {
-    isLoaded,
-    isAuthenticated: isSignedIn,
-    user,
+    isLoaded: isLoaded && !isCheckingStorage,
+    isAuthenticated,
+    user: currentUser,
     signOut: handleSignOut,
-    isLoading: !isLoaded
+    isLoading: !isLoaded || isCheckingStorage,
+    login,
+    logout
   };
 }
