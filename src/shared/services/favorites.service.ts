@@ -18,9 +18,11 @@ const FAVORITES_KEY = 'home0_favorites';
 
 export class FavoritesService {
   private favorites: Map<string, FavoriteProperty> = new Map();
+  private isLoaded: boolean = false;
+  private loadPromise: Promise<void>;
 
   constructor() {
-    this.loadFavorites();
+    this.loadPromise = this.loadFavorites();
   }
 
   private async loadFavorites() {
@@ -28,9 +30,15 @@ export class FavoritesService {
       const result = await chrome.storage.local.get(FAVORITES_KEY);
       const favorites = result[FAVORITES_KEY] || {};
       this.favorites = new Map(Object.entries(favorites));
+      this.isLoaded = true;
     } catch (error) {
       console.error('Failed to load favorites:', error);
+      this.isLoaded = true; // Mark as loaded even on error
     }
+  }
+
+  public async waitForLoad(): Promise<void> {
+    await this.loadPromise;
   }
 
   private async saveFavorites() {

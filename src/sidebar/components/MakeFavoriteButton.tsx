@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react';
 import { Button } from '@/sidebar/components/ui/button';
 import { cn } from '@/shared/utils/cn';
 import { FavoritesService } from '@/shared/services/favorites.service';
+import { useAuth } from '@/sidebar/hooks/useAuth';
 
 interface PropertyInfo {
   zpid: string;
@@ -21,36 +22,47 @@ export function MakeFavoriteButton() {
   const [currentProperty, setCurrentProperty] = useState<PropertyInfo | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const favoritesService = new FavoritesService();
+  const [favoritesService] = useState(() => new FavoritesService());
+  const { isAuthenticated } = useAuth();
 
   // Check for current property on mount and listen for updates
   useEffect(() => {
-    // Get initial property info
-    chrome.runtime.sendMessage({ type: 'GET_CURRENT_PROPERTY_INFO' }, (response) => {
-      if (response?.property) {
-        setCurrentProperty(response.property);
-        setIsFavorited(favoritesService.isFavorited(response.property.zpid));
-      }
-    });
+    const initializeProperty = async () => {
+      // Ensure favorites are loaded
+      await favoritesService.waitForLoad();
 
-    // Request property info from content script
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_CURRENT_PROPERTY' }, (response) => {
-          if (response?.property) {
-            setCurrentProperty(response.property);
-            setIsFavorited(favoritesService.isFavorited(response.property.zpid));
-          }
-        });
-      }
-    });
+      // Get initial property info
+      chrome.runtime.sendMessage({ type: 'GET_CURRENT_PROPERTY_INFO' }, (response) => {
+        if (response?.property) {
+          setCurrentProperty(response.property);
+          setIsFavorited(favoritesService.isFavorited(response.property.zpid));
+        }
+      });
+
+      // Request property info from content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_CURRENT_PROPERTY' }, (response) => {
+            if (response?.property) {
+              setCurrentProperty(response.property);
+              setIsFavorited(favoritesService.isFavorited(response.property.zpid));
+            }
+          });
+        }
+      });
+    };
+
+    initializeProperty();
 
     // Listen for property updates
     const messageListener = (request: any) => {
       if (request.type === 'PROPERTY_INFO_UPDATE') {
         if (request.property) {
           setCurrentProperty(request.property);
-          setIsFavorited(favoritesService.isFavorited(request.property.zpid));
+          // Check favorite status immediately since service should be loaded
+          favoritesService.waitForLoad().then(() => {
+            setIsFavorited(favoritesService.isFavorited(request.property.zpid));
+          });
         } else {
           setCurrentProperty(null);
           setIsFavorited(false);
@@ -61,21 +73,35 @@ export function MakeFavoriteButton() {
     chrome.runtime.onMessage.addListener(messageListener);
 
     // Listen for favorites changes
-    const favoritesListener = (favorites: any[]) => {
-      if (currentProperty) {
-        setIsFavorited(favorites.some(fav => fav.zpid === currentProperty.zpid));
-      }
-    };
-
-    favoritesService.onFavoritesChanged(favoritesListener);
+    const unsubscribe = favoritesService.onFavoritesChanged((favorites) => {
+      // We need to check the current property in a separate effect
+    });
 
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
+      unsubscribe();
     };
-  }, []);
+  }, [favoritesService]);
+
+  // Separate effect to handle favorites changes for current property
+  useEffect(() => {
+    if (!currentProperty) return;
+
+    const unsubscribe = favoritesService.onFavoritesChanged((favorites) => {
+      setIsFavorited(favorites.some(fav => fav.zpid === currentProperty.zpid));
+    });
+
+    return unsubscribe;
+  }, [currentProperty, favoritesService]);
 
   const handleClick = async () => {
     if (!currentProperty || isLoading) return;
+    
+    // Double-check authentication
+    if (!isAuthenticated) {
+      console.warn('User must be authenticated to favorite properties');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -100,7 +126,7 @@ export function MakeFavoriteButton() {
     }
   };
 
-  const isDisabled = !currentProperty || isLoading;
+  const isDisabled = !currentProperty || isLoading || !isAuthenticated;
 
   return (
     <div className="p-4 border-b">
@@ -112,6 +138,7 @@ export function MakeFavoriteButton() {
           isFavorited && "bg-amber-500 hover:bg-amber-600 text-white"
         )}
         variant={isFavorited ? "default" : "outline"}
+        title={!isAuthenticated ? "Sign in to favorite properties" : undefined}
       >
         <Heart
           className={cn(

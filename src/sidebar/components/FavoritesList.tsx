@@ -8,10 +8,17 @@ import { cn } from '@/shared/utils/cn';
 export function FavoritesList() {
   const [favorites, setFavorites] = useState<FavoriteProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const favoritesService = new FavoritesService();
+  const [favoritesService] = useState(() => new FavoritesService());
 
   useEffect(() => {
-    // Load initial favorites
+    // Load initial favorites after service is ready
+    const loadFavorites = async () => {
+      await favoritesService.waitForLoad();
+      const allFavorites = favoritesService.getAllFavorites();
+      setFavorites(allFavorites);
+      setIsLoading(false);
+    };
+
     loadFavorites();
 
     // Listen for favorites changes
@@ -20,19 +27,9 @@ export function FavoritesList() {
     });
 
     return () => {
-      // Cleanup would go here if we had an unsubscribe method
+      unsubscribe();
     };
-  }, []);
-
-  const loadFavorites = async () => {
-    setIsLoading(true);
-    try {
-      const allFavorites = favoritesService.getAllFavorites();
-      setFavorites(allFavorites);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [favoritesService]);
 
   const handleRemove = async (zpid: string) => {
     await favoritesService.removeFavorite(zpid);
