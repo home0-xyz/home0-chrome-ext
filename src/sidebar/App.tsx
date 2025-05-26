@@ -3,13 +3,22 @@ import { Button } from './components/ui/button';
 import { Skeleton } from './components/ui/skeleton';
 import { SignInForm } from './components/SignInForm';
 import { UserProfile } from './components/UserProfile';
+import { ClerkSignIn } from './components/ClerkSignIn';
+import { ClerkUserProfile } from './components/ClerkUserProfile';
 import { MakeFavoriteButton } from './components/MakeFavoriteButton';
 import { FavoritesList } from './components/FavoritesList';
 import { useAuth } from './hooks/useAuth';
+import { useClerkAuth } from './hooks/useClerkAuth';
+import { USE_CLERK_AUTH } from './config/auth.config';
 import { Home, Settings } from 'lucide-react';
 
 function App() {
-  const { isAuthenticated, user, isLoading: authLoading, login, logout } = useAuth();
+  // Use either Clerk or mock auth based on config
+  const mockAuth = useAuth();
+  const clerkAuth = useClerkAuth();
+  
+  const auth = USE_CLERK_AUTH ? clerkAuth : mockAuth;
+  const { isAuthenticated, user, isLoading: authLoading } = auth;
 
   return (
     <div className="h-full bg-background">
@@ -35,9 +44,9 @@ function App() {
             <>
               {/* Auth Section */}
               {!isAuthenticated ? (
-                <SignInForm onSignIn={login} />
+                USE_CLERK_AUTH ? <ClerkSignIn /> : <SignInForm onSignIn={mockAuth.login} />
               ) : (
-                user && <UserProfile user={user} onSignOut={logout} />
+                USE_CLERK_AUTH ? <ClerkUserProfile /> : (mockAuth.user && <UserProfile user={mockAuth.user} onSignOut={mockAuth.logout} />)
               )}
 
               {/* Make Favorite Button - Only show when authenticated */}

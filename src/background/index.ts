@@ -100,7 +100,9 @@ async function handleLogout(sendResponse: (response: any) => void) {
 
 async function handleCheckAuth(sendResponse: (response: any) => void) {
   try {
-    const isAuthenticated = await AuthStateManager.isAuthenticated();
+    // Check both mock auth and Clerk auth
+    const result = await chrome.storage.local.get(['isAuthenticated', 'clerkAuth']);
+    const isAuthenticated = result.isAuthenticated || result.clerkAuth?.isAuthenticated || false;
     sendResponse({ isAuthenticated });
   } catch (error) {
     sendResponse({ isAuthenticated: false });
