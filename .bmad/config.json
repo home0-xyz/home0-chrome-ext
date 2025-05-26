@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "commands": {
+    "prefix": "project:",
+    "enabled": [
+      "bmad",
+      "do",
+      "next"
+    ]
+  },
+  "agents": {
+    "included": false,
+    "location": ".bmad/agents"
+  },
+  "workflow": {
+    "default": "standard",
+    "phases": [
+      "ideation",
+      "planning",
+      "design",
+      "development",
+      "delivery"
+    ]
+  }
+}
