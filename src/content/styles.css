@@ -9,3 +9,16 @@
 .home0-sidebar-container {
   /* Styles will be added here */
 }
+
+/* Pulse animation for favorite button */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

@@ -37,7 +37,12 @@ export type MessageType =
   | 'LOGIN'
   | 'LOGOUT'
   | 'CHECK_AUTH'
-  | 'GET_CURRENT_USER';
+  | 'GET_CURRENT_USER'
+  | 'PROPERTY_PAGE_INFO'
+  | 'GET_CURRENT_PROPERTY_INFO'
+  | 'PROPERTY_INFO_UPDATE'
+  | 'GET_CURRENT_PROPERTY'
+  | 'TOGGLE_SIDEBAR';
 
 export interface Message<T = any> {
   type: MessageType;

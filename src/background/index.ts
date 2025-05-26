@@ -4,12 +4,15 @@ import { Message } from '../shared/types';
 
 const authService = new MockAuthService();
 
+// Store current property info
+let currentPropertyInfo: any = null;
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('home0 extension installed');
 });
 
 // Handle messages from content scripts and popup
-chrome.runtime.onMessage.addListener((request: Message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
   console.log('Message received:', request);
   
   switch (request.type) {
@@ -37,6 +40,26 @@ chrome.runtime.onMessage.addListener((request: Message, sender, sendResponse) =>
     case 'FAVORITE_PROPERTY':
       // Handle favoriting property
       sendResponse({ success: true });
+      break;
+      
+    case 'PROPERTY_PAGE_INFO':
+      // Store property info from content script
+      currentPropertyInfo = request;
+      // Forward to sidebar iframe
+      chrome.runtime.sendMessage({
+        type: 'PROPERTY_INFO_UPDATE',
+        isDetailPage: request.isDetailPage,
+        property: request.property
+      });
+      sendResponse({ success: true });
+      break;
+      
+    case 'GET_CURRENT_PROPERTY_INFO':
+      // Return stored property info
+      sendResponse({ 
+        isDetailPage: currentPropertyInfo?.isDetailPage || false,
+        property: currentPropertyInfo?.property || null 
+      });
       break;
       
     default:

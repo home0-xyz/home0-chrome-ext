@@ -20,10 +20,11 @@ export class SidebarInjector {
       right: 0;
       width: ${SIDEBAR_WIDTH}px;
       height: 100vh;
-      z-index: 999998;
+      z-index: 2147483647;
       transform: translateX(100%);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+      pointer-events: auto;
     `;
 
     // Create shadow root
@@ -66,32 +67,43 @@ export class SidebarInjector {
 
       .sidebar-frame {
         width: 100%;
-        height: 100%;
+        height: 100vh;
         background: white;
         box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
         overflow: hidden;
         position: relative;
+        display: flex;
+        flex-direction: column;
       }
 
       #sidebar-root {
         width: 100%;
-        height: 100%;
+        height: 100vh;
+        position: relative;
       }
     `;
   }
 
   private async loadReactApp() {
-    // We'll implement this next - it will dynamically load the React app
     const root = this.shadowRoot?.getElementById('sidebar-root');
     if (!root) return;
 
-    // For now, just add a placeholder
-    root.innerHTML = `
-      <div style="padding: 20px;">
-        <h2>home0 Sidebar</h2>
-        <p>React app will load here</p>
-      </div>
+    // Create an iframe to load the React app
+    const iframe = document.createElement('iframe');
+    iframe.src = chrome.runtime.getURL('sidebar/index.html');
+    iframe.style.cssText = `
+      width: 100%;
+      height: 100vh;
+      border: none;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
     `;
+    
+    // Clear the root and add the iframe
+    root.innerHTML = '';
+    root.appendChild(iframe);
   }
 
   public toggle() {

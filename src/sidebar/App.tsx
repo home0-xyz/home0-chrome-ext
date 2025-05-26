@@ -1,26 +1,18 @@
 import React from 'react';
-import { Card, CardContent } from './components/ui/card';
-import { ScrollArea } from './components/ui/scroll-area';
 import { Button } from './components/ui/button';
 import { Skeleton } from './components/ui/skeleton';
 import { SignInForm } from './components/SignInForm';
 import { UserProfile } from './components/UserProfile';
+import { MakeFavoriteButton } from './components/MakeFavoriteButton';
+import { FavoritesList } from './components/FavoritesList';
 import { useAuth } from './hooks/useAuth';
 import { Home, Settings } from 'lucide-react';
 
 function App() {
   const { isAuthenticated, user, isLoading: authLoading, login, logout } = useAuth();
-  const [favoritesLoading, setFavoritesLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // Simulate loading favorites
-    if (isAuthenticated) {
-      setTimeout(() => setFavoritesLoading(false), 1000);
-    }
-  }, [isAuthenticated]);
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-full bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
@@ -33,8 +25,7 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4">
           {authLoading ? (
             // Auth loading state
             <div className="space-y-2">
@@ -49,33 +40,21 @@ function App() {
                 user && <UserProfile user={user} onSignOut={logout} />
               )}
 
+              {/* Make Favorite Button - Only show when authenticated */}
+              {isAuthenticated && <MakeFavoriteButton />}
+
               {/* Favorites Section - Only show when authenticated */}
               {isAuthenticated && (
                 <div className="space-y-2">
                   <h2 className="text-sm font-medium text-muted-foreground">
                     Your Favorites
                   </h2>
-                  {favoritesLoading ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-24 w-full" />
-                      <Skeleton className="h-24 w-full" />
-                      <Skeleton className="h-24 w-full" />
-                    </div>
-                  ) : (
-                    <Card>
-                      <CardContent className="pt-6">
-                        <p className="text-sm text-muted-foreground text-center">
-                          No favorites yet. Start browsing Zillow to save properties!
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
+                  <FavoritesList />
                 </div>
               )}
             </>
           )}
-        </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
