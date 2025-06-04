@@ -7,11 +7,13 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "tsc && vite build && node scripts/build.js",
+    "dev": "NODE_ENV=development vite build --watch --mode development",
+    "build": "NODE_ENV=production tsc && vite build --mode production && node scripts/build.js",
+    "build:dev": "NODE_ENV=development tsc && vite build --mode development && node scripts/build.js dev",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clerk:add-origin": "node scripts/add-clerk-origin.js"
   },
   "repository": {
     "type": "git",

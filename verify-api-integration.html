@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify API Integration</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .checklist {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .check-item {
+      margin: 10px 0;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+    }
+    code {
+      background: #e9ecef;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    .success { color: #28a745; }
+    .error { color: #dc3545; }
+    .info { color: #17a2b8; }
+  </style>
+</head>
+<body>
+  <h1>API Integration Verification Checklist</h1>
+  
+  <div class="checklist">
+    <h2>✅ If your API is working, you should see:</h2>
+    
+    <div class="check-item">
+      <h3>1. In the test-local-api.html page:</h3>
+      <p class="success">✅ API is running!</p>
+      <p>Status: 200</p>
+      <p>Response: "OK" or similar</p>
+    </div>
+    
+    <div class="check-item">
+      <h3>2. In Chrome Extension Service Worker Console:</h3>
+      <p>Debug logs like:</p>
+      <code>[home0] API Request: GET http://localhost:8787/api/favorites</code>
+    </div>
+    
+    <div class="check-item">
+      <h3>3. In Service Worker Network Tab when favoriting:</h3>
+      <p><strong>Request:</strong> <code>POST http://localhost:8787/api/favorites</code></p>
+      <p><strong>Status:</strong> 200 or 201</p>
+      <p><strong>Response:</strong> <code>{"success": true, "id": "..."}</code></p>
+    </div>
+    
+    <div class="check-item">
+      <h3>4. In your Wrangler terminal:</h3>
+      <p>You should see logs like:</p>
+      <code>[wrangler] GET /api/favorites 200 OK</code><br>
+      <code>[wrangler] POST /api/favorites 201 Created</code>
+    </div>
+  </div>
+  
+  <div class="checklist">
+    <h2>🔍 Quick Tests:</h2>
+    
+    <div class="check-item">
+      <h3>Test 1: Check if favorites persist</h3>
+      <ol>
+        <li>Favorite a property on Zillow</li>
+        <li>Reload the extension</li>
+        <li>Check if the favorite is still there</li>
+      </ol>
+    </div>
+    
+    <div class="check-item">
+      <h3>Test 2: Check API calls</h3>
+      <ol>
+        <li>Open Service Worker DevTools</li>
+        <li>Go to Network tab</li>
+        <li>Clear network log</li>
+        <li>Favorite a property</li>
+        <li>Look for <code>POST localhost:8787/api/favorites</code></li>
+      </ol>
+    </div>
+  </div>
+  
+  <div class="checklist">
+    <h2 class="error">❌ If it's NOT working:</h2>
+    
+    <div class="check-item">
+      <p>You might see:</p>
+      <ul>
+        <li>No network requests to localhost:8787</li>
+        <li>Only "FAVORITES_UPDATED" messages (local storage only)</li>
+        <li>Network errors in console</li>
+        <li>CORS errors</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="checklist">
+    <h2 class="info">📝 Current Status Check:</h2>
+    <p>Tell me what you're seeing:</p>
+    <ol>
+      <li>Are you seeing API requests in the Network tab?</li>
+      <li>What's the response status (200, 401, 500, etc.)?</li>
+      <li>Any errors in the console?</li>
+      <li>Is the Wrangler terminal showing incoming requests?</li>
+    </ol>
+  </div>
+</body>
+</html>

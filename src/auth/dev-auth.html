@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticate Clerk Dev Instance</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status.loading {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .steps {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .step {
+            margin: 15px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .step::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Clerk Dev Authentication</h1>
+        
+        <div id="status" class="status loading">
+            Checking authentication status...
+        </div>
+
+        <button id="authButton" disabled>Authenticate Browser</button>
+
+        <div class="steps">
+            <h3>What this does:</h3>
+            <div class="step">Opens Clerk dev instance in a new tab</div>
+            <div class="step">Sets required authentication cookies</div>
+            <div class="step">Enables sign-up in your extension</div>
+        </div>
+    </div>
+
+    <script>
+        const CLERK_INSTANCE = 'https://coherent-bear-81.clerk.accounts.dev';
+        const statusEl = document.getElementById('status');
+        const authButton = document.getElementById('authButton');
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${CLERK_INSTANCE}/v1/dev_browser`, {
+                    credentials: 'include',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Browser authenticated! You can now sign up.';
+                    authButton.textContent = 'Re-authenticate';
+                    authButton.disabled = false;
+                    
+                    // Store auth status
+                    chrome.storage.local.set({ clerkDevAuth: true });
+                    
+                    // Close after 2 seconds
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Browser not authenticated. Click below to authenticate.';
+                    authButton.textContent = 'Authenticate Browser';
+                    authButton.disabled = false;
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Could not check authentication status.';
+                authButton.textContent = 'Try Authentication';
+                authButton.disabled = false;
+            }
+        }
+
+        authButton.addEventListener('click', async () => {
+            // Open Clerk instance in new tab
+            const authTab = window.open(CLERK_INSTANCE, '_blank');
+            
+            statusEl.className = 'status loading';
+            statusEl.textContent = 'Waiting for authentication...';
+            authButton.disabled = true;
+
+            // Check auth status every second
+            const checkInterval = setInterval(async () => {
+                const response = await fetch(`${CLERK_INSTANCE}/v1/dev_browser`, {
+                    credentials: 'include',
+                    mode: 'cors'
+                }).catch(() => null);
+
+                if (response && response.ok) {
+                    clearInterval(checkInterval);
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Authentication successful!';
+                    
+                    // Close the auth tab
+                    if (authTab && !authTab.closed) {
+                        authTab.close();
+                    }
+                    
+                    // Store auth status
+                    chrome.storage.local.set({ clerkDevAuth: true });
+                    
+                    // Redirect back to sign-up
+                    setTimeout(() => {
+                        window.location.href = chrome.runtime.getURL('src/auth/index.html?mode=sign-up');
+                    }, 1500);
+                }
+            }, 1000);
+
+            // Stop checking after 30 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                if (authButton.disabled) {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Authentication timed out. Please try again.';
+                    authButton.disabled = false;
+                }
+            }, 30000);
+        });
+
+        // Check auth on load
+        checkAuth();
+    </script>
+</body>
+</html>

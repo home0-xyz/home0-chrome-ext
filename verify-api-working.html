@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify API Working</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .status { 
+      padding: 10px; 
+      margin: 10px 0; 
+      border-radius: 5px; 
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    button { 
+      padding: 10px 20px; 
+      margin: 5px;
+      cursor: pointer;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Verification Test</h1>
+  
+  <div class="status info">
+    <strong>Instructions:</strong>
+    <ol>
+      <li>Open Chrome DevTools (F12)</li>
+      <li>Go to the "Service Worker" console for the extension</li>
+      <li>Click the buttons below and watch for [home0] logs</li>
+    </ol>
+  </div>
+
+  <h2>Test Actions</h2>
+  <button onclick="testHealth()">1. Test API Health</button>
+  <button onclick="testGet()">2. Get Favorites</button>
+  <button onclick="testAdd()">3. Add Test Favorite</button>
+  <button onclick="testRemove()">4. Remove Test Favorite</button>
+  
+  <div id="results"></div>
+
+  <script>
+    const testFavorite = {
+      zpid: '12345',
+      address: '123 Test St, Seattle, WA 98101',
+      price: '$500,000',
+      beds: 3,
+      baths: 2,
+      sqft: '1,800',
+      imageUrl: 'https://example.com/image.jpg',
+      listingUrl: 'https://www.zillow.com/homedetails/test-12345'
+    };
+
+    function log(message, type = 'info') {
+      const results = document.getElementById('results');
+      const time = new Date().toLocaleTimeString();
+      const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+      results.innerHTML += `<div class="status ${className}">[${time}] ${message}</div>`;
+      console.log(`[Test Page] ${message}`);
+    }
+
+    async function testHealth() {
+      log('Testing direct API connection...');
+      try {
+        const response = await fetch('http://localhost:8787/health');
+        const data = await response.json();
+        log(`API Health: ${JSON.stringify(data)}`, 'success');
+      } catch (error) {
+        log(`API Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function testGet() {
+      log('Getting favorites via extension...');
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'GET_FAVORITES' });
+        if (response.success) {
+          log(`Found ${response.favorites.length} favorites`, 'success');
+          log(`Check service worker console for [home0] logs!`, 'info');
+        } else {
+          log(`Error: ${response.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Extension Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function testAdd() {
+      log('Adding test favorite...');
+      try {
+        const response = await chrome.runtime.sendMessage({ 
+          type: 'FAVORITE_PROPERTY',
+          payload: testFavorite
+        });
+        if (response.success) {
+          log('Added successfully! Check service worker console.', 'success');
+        } else {
+          log(`Error: ${response.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Extension Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function testRemove() {
+      log('Removing test favorite (zpid: 12345)...');
+      log('This should trigger 2 API calls:', 'info');
+      log('1. GET /api/favorites (to find the ID)', 'info');
+      log('2. DELETE /api/favorites/{id}', 'info');
+      
+      try {
+        const response = await chrome.runtime.sendMessage({ 
+          type: 'UNFAVORITE_PROPERTY',
+          payload: { zpid: '12345' }
+        });
+        if (response.success) {
+          log('Removed successfully! Check service worker console.', 'success');
+        } else {
+          log(`Error: ${response.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Extension Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Initial message
+    log('Ready to test! Click buttons in order.', 'info');
+  </script>
+</body>
+</html>

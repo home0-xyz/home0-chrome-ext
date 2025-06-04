@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test API with Auth</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #cce5ff; color: #004085; }
+  </style>
+</head>
+<body>
+  <h1>Test Extension API Authentication</h1>
+  
+  <div>
+    <h2>1. Check Extension Storage</h2>
+    <button onclick="checkStorage()">Check Auth Storage</button>
+    <button onclick="debugAuth()">Debug Auth State</button>
+    <div id="storage-result" class="result"></div>
+  </div>
+
+  <div>
+    <h2>2. Test API Call from Extension</h2>
+    <button onclick="testExtensionApi()">Test Extension API Call</button>
+    <div id="extension-result" class="result"></div>
+  </div>
+
+  <div>
+    <h2>3. Manual API Test</h2>
+    <button onclick="manualApiTest()">Direct API Call (No Auth)</button>
+    <button onclick="manualApiTestWithToken()">Direct API Call (With Token)</button>
+    <div id="manual-result" class="result"></div>
+  </div>
+
+  <script>
+    // This only works when opened as chrome-extension://
+    async function checkStorage() {
+      const resultDiv = document.getElementById('storage-result');
+      
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        try {
+          const data = await chrome.storage.local.get(['clerkAuth']);
+          resultDiv.className = 'result info';
+          resultDiv.textContent = 'ClerkAuth in Storage:\n' + JSON.stringify(data.clerkAuth, null, 2);
+          
+          if (data.clerkAuth && data.clerkAuth.token) {
+            resultDiv.textContent += '\n\n✅ Token is present!';
+            resultDiv.textContent += '\nToken preview: ' + data.clerkAuth.token.substring(0, 20) + '...';
+          } else {
+            resultDiv.textContent += '\n\n❌ No token found in storage!';
+          }
+        } catch (error) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'Error: ' + error.message;
+        }
+      } else {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = 'Open this page as: chrome-extension://YOUR_EXTENSION_ID/test-api-auth.html';
+      }
+    }
+
+    async function debugAuth() {
+      const resultDiv = document.getElementById('storage-result');
+      
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        try {
+          chrome.runtime.sendMessage(
+            { type: 'DEBUG_AUTH' },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Runtime error: ' + chrome.runtime.lastError.message;
+                return;
+              }
+              
+              resultDiv.className = 'result info';
+              resultDiv.textContent = 'Auth Debug Info:\n' + JSON.stringify(response, null, 2);
+            }
+          );
+        } catch (error) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'Error: ' + error.message;
+        }
+      } else {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = 'Chrome extension API not available';
+      }
+    }
+
+    async function testExtensionApi() {
+      const resultDiv = document.getElementById('extension-result');
+      
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        try {
+          // Send message to background script
+          chrome.runtime.sendMessage(
+            { type: 'GET_FAVORITES' },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Runtime error: ' + chrome.runtime.lastError.message;
+                return;
+              }
+              
+              resultDiv.className = response.success ? 'result success' : 'result error';
+              resultDiv.textContent = 'Response from background:\n' + JSON.stringify(response, null, 2);
+            }
+          );
+        } catch (error) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'Error: ' + error.message;
+        }
+      } else {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = 'Chrome extension API not available';
+      }
+    }
+
+    async function manualApiTest() {
+      const resultDiv = document.getElementById('manual-result');
+      resultDiv.className = 'result info';
+      resultDiv.textContent = 'Testing direct API call to http://localhost:8787/api/favorites...';
+      
+      try {
+        const response = await fetch('http://localhost:8787/api/favorites', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          mode: 'cors'
+        });
+        
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+        
+        resultDiv.className = response.status === 401 ? 'result info' : 'result success';
+        resultDiv.textContent = `Status: ${response.status} ${response.statusText}\n`;
+        resultDiv.textContent += `Response: ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`;
+        
+        if (response.status === 401) {
+          resultDiv.textContent += '\n\n👆 This 401 is expected without auth token';
+        }
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = `Network Error: ${error.message}\n\n`;
+        resultDiv.textContent += '❌ API server might not be running on http://localhost:8787';
+      }
+    }
+
+    async function manualApiTestWithToken() {
+      const resultDiv = document.getElementById('manual-result');
+      
+      // First get token from storage
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        const data = await chrome.storage.local.get(['clerkAuth']);
+        const token = data.clerkAuth?.token;
+        
+        if (!token) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'No token found in storage. Please sign in first.';
+          return;
+        }
+        
+        resultDiv.className = 'result info';
+        resultDiv.textContent = 'Testing API with token from storage...';
+        
+        try {
+          const response = await fetch('http://localhost:8787/api/favorites', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            mode: 'cors'
+          });
+          
+          const text = await response.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = text;
+          }
+          
+          resultDiv.className = response.ok ? 'result success' : 'result error';
+          resultDiv.textContent = `Status: ${response.status} ${response.statusText}\n`;
+          resultDiv.textContent += `Response: ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`;
+          
+          if (response.ok) {
+            resultDiv.textContent += '\n\n✅ Authentication successful!';
+          }
+        } catch (error) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = `Network Error: ${error.message}`;
+        }
+      } else {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = 'Chrome storage API not available';
+      }
+    }
+  </script>
+</body>
+</html>

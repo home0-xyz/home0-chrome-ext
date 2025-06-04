@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Test</title>
+</head>
+<body>
+  <h1>Basic Extension Test</h1>
+  <button id="btn">Click Me</button>
+  <div id="result"></div>
+  
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      console.log('Button clicked!');
+      document.getElementById('result').textContent = 'Sending message...';
+      
+      try {
+        console.log('About to send message');
+        const response = await chrome.runtime.sendMessage({ type: 'GET_FAVORITES' });
+        console.log('Got response:', response);
+        document.getElementById('result').textContent = 'Success: ' + JSON.stringify(response);
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('result').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test if chrome.runtime is available
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+      console.log('Chrome runtime is available, extension ID:', chrome.runtime.id);
+    } else {
+      console.error('Chrome runtime is NOT available!');
+      document.getElementById('result').textContent = 'ERROR: Not running as extension page!';
+    }
+  </script>
+</body>
+</html>

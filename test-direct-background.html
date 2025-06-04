@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct Background Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    button { margin: 5px; padding: 10px; }
+    #output { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Direct Background Test</h1>
+  <p>Check the console here AND the service worker console</p>
+  
+  <button onclick="testMessage()">Send Test Message</button>
+  <button onclick="testFavorites()">Test Get Favorites</button>
+  
+  <div id="output"></div>
+  
+  <script>
+    // Add console log to THIS page
+    console.log('[TEST PAGE] Loaded at', new Date().toISOString());
+    
+    async function testMessage() {
+      console.log('[TEST PAGE] Sending message to background...');
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'CHECK_AUTH' });
+        console.log('[TEST PAGE] Got response:', response);
+        document.getElementById('output').textContent = JSON.stringify(response, null, 2);
+      } catch (error) {
+        console.error('[TEST PAGE] Error:', error);
+        document.getElementById('output').textContent = 'Error: ' + error.message;
+      }
+    }
+    
+    async function testFavorites() {
+      console.log('[TEST PAGE] Getting favorites...');
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'GET_FAVORITES' });
+        console.log('[TEST PAGE] Got favorites response:', response);
+        document.getElementById('output').textContent = JSON.stringify(response, null, 2);
+      } catch (error) {
+        console.error('[TEST PAGE] Error:', error);
+        document.getElementById('output').textContent = 'Error: ' + error.message;
+      }
+    }
+    
+    // Test immediately
+    testMessage();
+  </script>
+</body>
+</html>

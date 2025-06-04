@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No-Auth API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .notice {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      background: #0084ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #0066cc;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    .info { color: blue; }
+    .test-property {
+      background: white;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>No-Auth API Test</h1>
+  
+  <div class="notice">
+    <strong>🚨 Server is in NO-AUTH mode</strong><br>
+    All requests will succeed using mock user "test-user-123"
+  </div>
+  
+  <h2>API Health Check</h2>
+  <button onclick="testHealth()">Check API Health</button>
+  
+  <h2>Favorites Operations</h2>
+  <button onclick="getFavorites()">Get All Favorites</button>
+  <button onclick="addTestFavorite()">Add Test Property</button>
+  <button onclick="clearAllFavorites()">Clear All Favorites</button>
+  
+  <h2>Test Properties</h2>
+  <div id="testProperties"></div>
+  
+  <h2>Output</h2>
+  <div id="output">Ready to test...</div>
+  
+  <script src="test-no-auth-api.js"></script>
+</body>
+</html>

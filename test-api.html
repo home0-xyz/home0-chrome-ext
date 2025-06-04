@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test - home0</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .response {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    .error {
+      background: #ffebee;
+      color: #d32f2f;
+    }
+    .success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Connection Test</h1>
+  
+  <div class="test-section">
+    <h2>1. Basic Connection Test</h2>
+    <button onclick="testConnection()">Test API Connection</button>
+    <div id="connection-result" class="response"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. Favorites Endpoint (No Auth)</h2>
+    <button onclick="testFavoritesNoAuth()">GET /api/favorites (No Auth)</button>
+    <div id="favorites-noauth-result" class="response"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. Favorites Endpoint (Mock Auth)</h2>
+    <button onclick="testFavoritesWithAuth()">GET /api/favorites (With Mock Token)</button>
+    <div id="favorites-auth-result" class="response"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>4. CORS Test</h2>
+    <button onclick="testCORS()">Test CORS Headers</button>
+    <div id="cors-result" class="response"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://api.home0.xyz';
+
+    function showResult(elementId, content, isError = false) {
+      const element = document.getElementById(elementId);
+      element.textContent = content;
+      element.className = `response ${isError ? 'error' : 'success'}`;
+    }
+
+    async function testConnection() {
+      try {
+        const response = await fetch(API_BASE, {
+          method: 'GET',
+          mode: 'cors'
+        });
+        
+        showResult('connection-result', 
+          `Status: ${response.status} ${response.statusText}\n` +
+          `Headers:\n${JSON.stringify(Object.fromEntries(response.headers), null, 2)}`
+        );
+      } catch (error) {
+        showResult('connection-result', `Error: ${error.message}`, true);
+      }
+    }
+
+    async function testFavoritesNoAuth() {
+      try {
+        const response = await fetch(`${API_BASE}/api/favorites`, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+        
+        showResult('favorites-noauth-result', 
+          `Status: ${response.status}\n` +
+          `Response: ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`,
+          response.status >= 400
+        );
+      } catch (error) {
+        showResult('favorites-noauth-result', `Error: ${error.message}`, true);
+      }
+    }
+
+    async function testFavoritesWithAuth() {
+      try {
+        const response = await fetch(`${API_BASE}/api/favorites`, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-jwt-token-for-testing'
+          }
+        });
+        
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+        
+        showResult('favorites-auth-result', 
+          `Status: ${response.status}\n` +
+          `Response: ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`,
+          response.status >= 400
+        );
+      } catch (error) {
+        showResult('favorites-auth-result', `Error: ${error.message}`, true);
+      }
+    }
+
+    async function testCORS() {
+      try {
+        const response = await fetch(`${API_BASE}/api/favorites`, {
+          method: 'OPTIONS',
+          mode: 'cors',
+          headers: {
+            'Origin': window.location.origin,
+            'Access-Control-Request-Method': 'GET',
+            'Access-Control-Request-Headers': 'authorization,content-type'
+          }
+        });
+        
+        const corsHeaders = {
+          'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+          'access-control-allow-methods': response.headers.get('access-control-allow-methods'),
+          'access-control-allow-headers': response.headers.get('access-control-allow-headers'),
+          'access-control-allow-credentials': response.headers.get('access-control-allow-credentials')
+        };
+        
+        showResult('cors-result', 
+          `Status: ${response.status}\n` +
+          `CORS Headers:\n${JSON.stringify(corsHeaders, null, 2)}`,
+          response.status >= 400
+        );
+      } catch (error) {
+        showResult('cors-result', `Error: ${error.message}`, true);
+      }
+    }
+  </script>
+</body>
+</html>

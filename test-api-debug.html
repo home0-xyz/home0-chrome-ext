@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Debug Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      background: #0084ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .api-call { color: blue; font-weight: bold; }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+  <h1>API Debug Test</h1>
+  
+  <p>This test will show exactly when API calls are made.</p>
+  
+  <h2>Direct API Tests</h2>
+  <button onclick="testDirectAPI()">Test Direct API Call</button>
+  <button onclick="testGetFavorites()">Get Favorites (via Extension)</button>
+  
+  <h2>Add Test Favorite</h2>
+  <button onclick="addTestFavorite()">Add Test Favorite</button>
+  
+  <h2>Remove Test</h2>
+  <div id="favorites-list"></div>
+  
+  <h2>Console Output</h2>
+  <div id="output">Check the extension background console for detailed logs...</div>
+  
+  <script>
+    const testProperty = {
+      zpid: '99999',
+      address: '999 Debug Test St, Testing, CA 99999',
+      price: '$999,999',
+      beds: 9,
+      baths: 9,
+      sqft: '9,999',
+      imageUrl: 'https://photos.zillowstatic.com/fp/test.jpg',
+      listingUrl: 'https://www.zillow.com/homedetails/test-99999'
+    };
+    
+    function log(msg, type = '') {
+      const output = document.getElementById('output');
+      const className = type === 'api' ? 'api-call' : type;
+      const time = new Date().toLocaleTimeString();
+      output.innerHTML += `<span class="${className}">[${time}] ${msg}</span>\n`;
+    }
+    
+    async function testDirectAPI() {
+      log('Making direct API call to backend...', 'api');
+      try {
+        const response = await fetch('http://localhost:8787/api/favorites');
+        const data = await response.json();
+        log(`Direct API Response: ${JSON.stringify(data)}`, 'success');
+      } catch (error) {
+        log(`Direct API Error: ${error.message}`, 'error');
+      }
+    }
+    
+    async function testGetFavorites() {
+      log('Getting favorites via extension...', 'api');
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'GET_FAVORITES' });
+        log(`Extension Response: ${JSON.stringify(response)}`, 'success');
+        updateFavoritesList(response.favorites || []);
+      } catch (error) {
+        log(`Extension Error: ${error.message}`, 'error');
+      }
+    }
+    
+    async function addTestFavorite() {
+      log(`Adding test favorite: ${testProperty.address}`, 'api');
+      try {
+        const response = await chrome.runtime.sendMessage({ 
+          type: 'FAVORITE_PROPERTY',
+          payload: testProperty
+        });
+        log(`Add Response: ${JSON.stringify(response)}`, response.success ? 'success' : 'error');
+        
+        // Refresh list after adding
+        setTimeout(testGetFavorites, 1000);
+      } catch (error) {
+        log(`Add Error: ${error.message}`, 'error');
+      }
+    }
+    
+    async function removeFavorite(zpid) {
+      log(`REMOVING favorite with zpid: ${zpid}`, 'api');
+      log('This should trigger 2 API calls:', 'api');
+      log('1. GET /api/favorites (to find the ID)', 'api');
+      log('2. DELETE /api/favorites/{id}', 'api');
+      
+      try {
+        const response = await chrome.runtime.sendMessage({ 
+          type: 'UNFAVORITE_PROPERTY',
+          payload: { zpid }
+        });
+        log(`Remove Response: ${JSON.stringify(response)}`, response.success ? 'success' : 'error');
+        
+        // Refresh list after removing
+        setTimeout(testGetFavorites, 1000);
+      } catch (error) {
+        log(`Remove Error: ${error.message}`, 'error');
+      }
+    }
+    
+    function updateFavoritesList(favorites) {
+      const list = document.getElementById('favorites-list');
+      if (favorites.length === 0) {
+        list.innerHTML = '<p>No favorites found. Add one first!</p>';
+      } else {
+        list.innerHTML = favorites.map(fav => `
+          <div style="margin: 10px 0; padding: 10px; background: white; border: 1px solid #ddd;">
+            <strong>${fav.address}</strong><br>
+            ZPID: ${fav.zpid}<br>
+            <button onclick="removeFavorite('${fav.zpid}')">Remove This Favorite</button>
+          </div>
+        `).join('');
+      }
+    }
+    
+    // Initial load
+    log('Page loaded. Click buttons to test API calls.');
+    log('IMPORTANT: Check the extension background console for [home0] logs!');
+    testGetFavorites();
+  </script>
+</body>
+</html>

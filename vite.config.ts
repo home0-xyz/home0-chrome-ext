@@ -1,20 +1,31 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import fs from 'fs';
 
 // Custom plugin to copy manifest and trigger reload
-const chromeExtensionPlugin = () => {
+const chromeExtensionPlugin = (mode: string) => {
   return {
     name: 'chrome-extension',
     generateBundle() {
-      // Copy manifest.json to dist
-      const manifest = fs.readFileSync('manifest.json', 'utf-8');
-      this.emitFile({
-        type: 'asset',
-        fileName: 'manifest.json',
-        source: manifest,
-      });
+      // Use appropriate manifest based on mode
+      const manifestFile = mode === 'production' ? 'manifest.prod.json' : 'manifest.dev.json';
+      const fallbackManifest = 'manifest.json';
+      
+      let manifest;
+      if (fs.existsSync(manifestFile)) {
+        manifest = fs.readFileSync(manifestFile, 'utf-8');
+      } else if (fs.existsSync(fallbackManifest)) {
+        manifest = fs.readFileSync(fallbackManifest, 'utf-8');
+      }
+      
+      if (manifest) {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'manifest.json',
+          source: manifest,
+        });
+      }
       
       // Copy test-popup.html if it exists
       if (fs.existsSync('test-popup.html')) {
@@ -29,8 +40,15 @@ const chromeExtensionPlugin = () => {
   };
 };
 
-export default defineConfig({
-  plugins: [react(), chromeExtensionPlugin()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  
+  return {
+    plugins: [react(), chromeExtensionPlugin(mode)],
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(mode),
+      'process.env.VITE_CLERK_PUBLISHABLE_KEY': JSON.stringify(env.VITE_CLERK_PUBLISHABLE_KEY || ''),
+    },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -47,6 +65,7 @@ export default defineConfig({
         sidebar: resolve(__dirname, 'src/sidebar/index.html'),
         popup: resolve(__dirname, 'src/popup/index.html'),
         auth: resolve(__dirname, 'src/auth/index.html'),
+        'dev-auth': resolve(__dirname, 'src/auth/dev-auth.html'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
@@ -74,4 +93,5 @@ export default defineConfig({
   },
   // Copy public files to dist
   publicDir: 'public',
+  };
 });

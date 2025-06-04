@@ -45,3 +45,7 @@ lerna-debug.log*
 coverage/
 key.pem
 key.pub
+
+# Environment variables
+.env
+.env.local

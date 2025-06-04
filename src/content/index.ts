@@ -303,11 +303,20 @@ function sendPropertyInfoToBackground() {
   const propertyInfo = extractPropertyInfo();
   
   // Send message to background script
-  chrome.runtime.sendMessage({
-    type: 'PROPERTY_PAGE_INFO',
-    isDetailPage: !!propertyInfo,
-    property: propertyInfo
-  });
+  try {
+    chrome.runtime.sendMessage({
+      type: 'PROPERTY_PAGE_INFO',
+      isDetailPage: !!propertyInfo,
+      property: propertyInfo
+    }, (response) => {
+      // Check for errors
+      if (chrome.runtime.lastError) {
+        console.log('Failed to send property info:', chrome.runtime.lastError.message);
+      }
+    });
+  } catch (error) {
+    console.log('Extension context might be invalidated:', error);
+  }
 }
 
 // Listen for messages from background or popup

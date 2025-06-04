@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "home0 for Zillow (DEV)",
+  "version": "1.0.0",
+  "description": "Save and sync your favorite Zillow properties to home0 - DEVELOPMENT BUILD",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo5cC3sA4LxvijagMTekx23FalmqwHHVwRM5V37P2ZvfBr0jE3vimRiI8e/LG19F0ZH9JEdxnk4GVrXr6HrJ/Qu4nPPgCADj3s+oDHqzUbYOOMhzrzzWFZ2R8CDgysqPS+2MtKxEuiwbE2kt9PH8bN5R2RFE7SO8JZgVEfvL5NB5Z0RpzdcqtV4Ni/cZhad9CTArLH3RhmXYp0KPlQcvm8+0X/HbtUcMqPCHx+e/NZQcXXGDWugrXAqCo5GG8RWKWujzumuaPugLLMtw237GGUlt7wQtQmd74p1FyNWUko4FC3JQkinsZ0/G38Wvh3OiKuVeUexognojeGtbb/B9ESQIDAQAB",
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.zillow.com/*",
+    "http://localhost:8787/*"
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.zillow.com/*"],
+      "js": ["content/index.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidebar/*",
+        "auth/*",
+        "content/styles.css"
+      ],
+      "matches": ["https://www.zillow.com/*"]
+    }
+  ]
+}

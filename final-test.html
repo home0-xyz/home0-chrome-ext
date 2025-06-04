@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Final API Test</title>
+  <style>
+    body { padding: 20px; font-family: monospace; }
+    button { padding: 10px; margin: 5px; font-size: 16px; }
+    .log { margin: 5px 0; padding: 5px; background: #f0f0f0; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Final API Test - Watch Service Worker Console!</h1>
+  
+  <button onclick="test1()">1. Direct Backend Test</button>
+  <button onclick="test2()">2. Get Favorites (Should trigger API)</button>
+  <button onclick="test3()">3. Add Favorite (Should trigger API)</button>
+  <button onclick="test4()">4. Remove Favorite (Should trigger 2 APIs)</button>
+  
+  <div id="logs"></div>
+  
+  <script>
+    function addLog(msg, type = '') {
+      const logs = document.getElementById('logs');
+      const div = document.createElement('div');
+      div.className = `log ${type}`;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logs.insertBefore(div, logs.firstChild);
+    }
+    
+    async function test1() {
+      addLog('Testing direct backend connection...');
+      try {
+        const res = await fetch('http://localhost:8787/api/favorites');
+        const data = await res.json();
+        addLog(`Backend returned: ${JSON.stringify(data).substring(0, 100)}...`, 'success');
+      } catch (e) {
+        addLog(`Backend error: ${e.message}`, 'error');
+      }
+    }
+    
+    async function test2() {
+      addLog('Sending GET_FAVORITES to extension...');
+      addLog('CHECK SERVICE WORKER CONSOLE NOW!');
+      try {
+        const res = await chrome.runtime.sendMessage({ type: 'GET_FAVORITES' });
+        addLog(`Extension returned: ${JSON.stringify(res).substring(0, 100)}...`, 'success');
+      } catch (e) {
+        addLog(`Extension error: ${e.message}`, 'error');
+      }
+    }
+    
+    async function test3() {
+      addLog('Sending FAVORITE_PROPERTY to extension...');
+      addLog('CHECK SERVICE WORKER CONSOLE NOW!');
+      try {
+        const res = await chrome.runtime.sendMessage({ 
+          type: 'FAVORITE_PROPERTY',
+          payload: {
+            zpid: '999999',
+            address: '999 Test St',
+            price: '$999,999',
+            beds: 9,
+            baths: 9,
+            sqft: '9999',
+            imageUrl: 'test.jpg',
+            listingUrl: 'https://zillow.com/test'
+          }
+        });
+        addLog(`Extension returned: ${JSON.stringify(res)}`, 'success');
+      } catch (e) {
+        addLog(`Extension error: ${e.message}`, 'error');
+      }
+    }
+    
+    async function test4() {
+      addLog('Sending UNFAVORITE_PROPERTY to extension...');
+      addLog('This should trigger 2 API calls in service worker!');
+      addLog('CHECK SERVICE WORKER CONSOLE NOW!');
+      try {
+        const res = await chrome.runtime.sendMessage({ 
+          type: 'UNFAVORITE_PROPERTY',
+          payload: { zpid: '999999' }
+        });
+        addLog(`Extension returned: ${JSON.stringify(res)}`, 'success');
+      } catch (e) {
+        addLog(`Extension error: ${e.message}`, 'error');
+      }
+    }
+    
+    addLog('Page loaded. Click buttons and watch Service Worker console!');
+  </script>
+</body>
+</html>

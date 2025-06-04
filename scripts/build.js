@@ -3,7 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distDir = path.join(__dirname, '..', 'dist');
+const rootDir = path.join(__dirname, '..');
+const distDir = path.join(rootDir, 'dist');
+
+// Determine if this is a dev build
+const isDev = process.argv.includes('dev');
 
 // Move sidebar HTML to correct location
 const sidebarHtmlSrc = path.join(distDir, 'src', 'sidebar', 'index.html');
@@ -68,4 +72,20 @@ if (fs.existsSync(authHtmlSrc)) {
 // Clean up empty src directory
 if (fs.existsSync(path.join(distDir, 'src'))) {
   fs.rmSync(path.join(distDir, 'src'), { recursive: true, force: true });
+}
+
+// Copy the appropriate manifest file
+const manifestSrc = path.join(rootDir, isDev ? 'manifest.dev.json' : 'manifest.prod.json');
+const manifestDest = path.join(distDir, 'manifest.json');
+
+if (fs.existsSync(manifestSrc)) {
+  fs.copyFileSync(manifestSrc, manifestDest);
+  console.log(`✓ Copied ${isDev ? 'development' : 'production'} manifest`);
+} else {
+  // Fallback to default manifest if specific ones don't exist
+  const defaultManifest = path.join(rootDir, 'manifest.json');
+  if (fs.existsSync(defaultManifest)) {
+    fs.copyFileSync(defaultManifest, manifestDest);
+    console.log('✓ Copied default manifest');
+  }
 }

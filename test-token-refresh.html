@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Refresh Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      margin: 5px;
+      padding: 10px;
+      cursor: pointer;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+    .token-info {
+      margin-top: 10px;
+      padding: 10px;
+      background: #e0e0e0;
+      border-radius: 5px;
+    }
+    .expired {
+      color: red;
+    }
+    .valid {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Token Refresh Test</h1>
+  
+  <div>
+    <button onclick="checkAuthState()">Check Auth State</button>
+    <button onclick="makeApiCall()">Make API Call</button>
+    <button onclick="simulateExpiredToken()">Simulate Expired Token</button>
+    <button onclick="refreshToken()">Manually Refresh Token</button>
+    <button onclick="monitorToken()">Start Token Monitor</button>
+    <button onclick="stopMonitor()">Stop Monitor</button>
+  </div>
+  
+  <div id="output">Click a button to see results...</div>
+  
+  <script src="test-token-refresh.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>home0 - Sign In</title>
+    <!-- Add CSP meta tag to allow Clerk -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' https://*.clerk.accounts.dev https://*.clerk.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com;
+      style-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com wss://*.clerk.accounts.dev;
+      frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com;
+      font-src 'self' data:;
+    ">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Auth State</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .error { background: #f8d7da; color: #721c24; }
+    .success { background: #d4edda; color: #155724; }
+  </style>
+</head>
+<body>
+  <h1>Debug Extension Auth State</h1>
+  
+  <button onclick="checkAuthState()">Check Auth State in Storage</button>
+  <div id="auth-state" class="result"></div>
+  
+  <button onclick="checkApiHeaders()">Test API Request Headers</button>
+  <div id="api-headers" class="result"></div>
+
+  <script>
+    async function checkAuthState() {
+      const resultDiv = document.getElementById('auth-state');
+      
+      // This will only work if opened as an extension page
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        try {
+          const data = await chrome.storage.local.get(null); // Get all storage
+          resultDiv.className = 'result success';
+          resultDiv.textContent = 'Chrome Storage Contents:\n' + JSON.stringify(data, null, 2);
+        } catch (error) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'Error: ' + error.message;
+        }
+      } else {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = 'This page must be opened through the extension to access chrome.storage';
+      }
+    }
+
+    async function checkApiHeaders() {
+      const resultDiv = document.getElementById('api-headers');
+      
+      try {
+        // Make a test request to see what headers are being sent
+        const response = await fetch('http://localhost:8787/api/favorites', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors'
+        });
+        
+        resultDiv.className = 'result';
+        resultDiv.textContent = `Status: ${response.status} ${response.statusText}\n`;
+        resultDiv.textContent += `\nNote: This test request doesn't include auth headers.\n`;
+        resultDiv.textContent += `Check the Service Worker console to see if clerkAuthService.getToken() returns a value.`;
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = 'Error: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
